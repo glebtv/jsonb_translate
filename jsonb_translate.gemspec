@@ -16,9 +16,11 @@ Gem::Specification.new do |s|
   s.test_files        = Dir['test/**/*']
   s.require_paths     = ['lib']
 
-  s.add_dependency 'activerecord', '~> 4.2'
+  s.add_dependency 'activerecord', '>= 4.2'
+  s.add_dependency 'pg'
 
   s.add_development_dependency 'rake'
+  s.add_development_dependency 'bundler'
   s.add_development_dependency 'minitest', '>= 4.0'
   s.add_development_dependency 'database_cleaner'
 end
