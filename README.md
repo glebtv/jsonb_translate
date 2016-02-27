@@ -9,7 +9,8 @@ maintain separate translation tables.
 
 ## Requirements
 
-* ActiveRecord > 4.2.0
+* ActiveRecord >= 4.2.0
+* PostgreSQL >= 9.4
 * I18n
 
 ## Installation
