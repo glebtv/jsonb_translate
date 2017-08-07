@@ -24,11 +24,7 @@ module JsonbTranslate
         end
       end
 
-      alias_method :respond_to_without_translates?, :respond_to?
-      alias_method :respond_to?, :respond_to_with_translates?
-
-      alias_method :method_missing_without_translates, :method_missing
-      alias_method :method_missing, :method_missing_with_translates
+      prepend InstanceMethods::AliasedMethods # in place of alias_method_chain for respond_to? and method_missing
     end
 
     # Improve compatibility with the gem globalize
@@ -37,17 +33,31 @@ module JsonbTranslate
     end
 
     module InstanceMethods
+      module AliasedMethods
+        def respond_to?(symbol, include_all = false)
+          return true if parse_translated_attribute_accessor(symbol)
+          super(symbol, include_all)
+        end
+
+        def method_missing(method_name, *args)
+          translated_attr_name, locale, assigning = parse_translated_attribute_accessor(method_name)
+
+          return super(method_name, *args) unless translated_attr_name
+
+          if assigning
+            write_jsonb_translation(translated_attr_name, args.first, locale)
+          else
+            read_jsonb_translation(translated_attr_name, locale)
+          end
+        end
+      end
+
       def disable_fallback(&block)
         toggle_fallback(enabled = false, &block)
       end
 
       def enable_fallback(&block)
         toggle_fallback(enabled = true, &block)
-      end
-
-      def respond_to_with_translates?(symbol, include_all = false)
-        return true if parse_translated_attribute_accessor(symbol)
-        respond_to_without_translates?(symbol, include_all)
       end
 
       protected
@@ -81,18 +91,6 @@ module JsonbTranslate
         translations[locale.to_s] = value
         send("#{translation_store}=", translations)
         value
-      end
-
-      def method_missing_with_translates(method_name, *args)
-        translated_attr_name, locale, assigning = parse_translated_attribute_accessor(method_name)
-
-        return method_missing_without_translates(method_name, *args) unless translated_attr_name
-
-        if assigning
-          write_jsonb_translation(translated_attr_name, args.first, locale)
-        else
-          read_jsonb_translation(translated_attr_name, locale)
-        end
       end
 
       # Internal: Parse a translated convenience accessor name.
